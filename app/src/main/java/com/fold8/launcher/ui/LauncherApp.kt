@@ -30,8 +30,6 @@ import com.fold8.launcher.ui.fold.rememberFoldState
 import com.fold8.launcher.ui.main.MainHomeScreen
 import com.fold8.launcher.ui.tent.TentClockScreen
 import com.fold8.launcher.ui.theme.Fold8LauncherTheme
-import com.fold8.launcher.ui.widgets.CreateAppPairDialog
-import com.fold8.launcher.ui.widgets.CreateAppTrioDialog
 
 /**
  * 갤럭시 Z 폴드8 런처 메인 컴포저블
@@ -49,15 +47,10 @@ fun LauncherApp(
     val foldState = rememberFoldState()
 
     val installedApps by viewModel.installedApps.collectAsState()
-    val recentApps by viewModel.recentApps.collectAsState()
-    val appPairs by viewModel.appPairs.collectAsState()
-    val appTrios by viewModel.appTrios.collectAsState()
     val filteredApps by viewModel.filteredApps.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val selectedCategory by viewModel.selectedCategory.collectAsState()
     val isAppDrawerOpen by viewModel.isAppDrawerOpen.collectAsState()
-    val isCreatePairDialogOpen by viewModel.isCreatePairDialogOpen.collectAsState()
-    val isCreateTrioDialogOpen by viewModel.isCreateTrioDialogOpen.collectAsState()
 
     // 5번 기능: 텐트 모드(탁상시계) 활성화 상태
     var isTentModeActive by remember { mutableStateOf(false) }
@@ -117,7 +110,6 @@ fun LauncherApp(
                         FlexHomeScreen(
                             foldState = foldState,
                             installedApps = installedApps,
-                            appPairs = appPairs,
                             onAppClick = { viewModel.launchApp(it) },
                             onSplitLaunch = { viewModel.launchAppAdjacent(it) },
                             onOpenDrawer = { viewModel.setAppDrawerOpen(true) }
@@ -164,33 +156,8 @@ fun LauncherApp(
                         viewModel.launchAppAdjacent(app)
                         viewModel.setAppDrawerOpen(false)
                     },
-                    onCreatePairClick = {
-                        viewModel.setCreatePairDialogOpen(true)
-                    },
                     onClose = {
                         viewModel.setAppDrawerOpen(false)
-                    }
-                )
-            }
-
-            // 2분할 앱 페어 신규 생성 다이얼로그
-            if (isCreatePairDialogOpen) {
-                CreateAppPairDialog(
-                    availableApps = installedApps,
-                    onDismiss = { viewModel.setCreatePairDialogOpen(false) },
-                    onSave = { title, first, second ->
-                        viewModel.createAndSavePair(title, first, second)
-                    }
-                )
-            }
-
-            // 3분할 앱 트리오 신규 생성 다이얼로그
-            if (isCreateTrioDialogOpen) {
-                CreateAppTrioDialog(
-                    availableApps = installedApps,
-                    onDismiss = { viewModel.setCreateTrioDialogOpen(false) },
-                    onSave = { title, first, second, third ->
-                        viewModel.createAndSaveTrio(title, first, second, third)
                     }
                 )
             }

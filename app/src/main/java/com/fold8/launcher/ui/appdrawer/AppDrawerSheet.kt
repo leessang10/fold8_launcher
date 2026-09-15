@@ -3,7 +3,6 @@ package com.fold8.launcher.ui.appdrawer
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -24,7 +23,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.GroupAdd
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -67,7 +65,6 @@ fun AppDrawerSheet(
     onCategorySelect: (AppCategory) -> Unit,
     onAppClick: (AppItem) -> Unit,
     onSplitLaunch: (AppItem) -> Unit,
-    onCreatePairClick: () -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -87,7 +84,7 @@ fun AppDrawerSheet(
         ) {
             Spacer(modifier = Modifier.height(12.dp))
 
-            // 상단 검색바 & 앱 페어 생성 액션
+            // 상단 검색바 & 닫기 버튼
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -134,25 +131,6 @@ fun AppDrawerSheet(
                 )
 
                 Spacer(modifier = Modifier.width(8.dp))
-
-                // 앱 페어 생성 버튼
-                IconButton(
-                    onClick = onCreatePairClick,
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(FoldDarkCard)
-                        .border(1.dp, GlassBorder, CircleShape)
-                ) {
-                    Icon(
-                        Icons.Default.GroupAdd,
-                        contentDescription = "앱 페어 생성",
-                        tint = FoldAccentCyan,
-                        modifier = Modifier.size(22.dp)
-                    )
-                }
-
-                Spacer(modifier = Modifier.width(4.dp))
 
                 // 닫기 버튼
                 IconButton(
@@ -222,8 +200,7 @@ fun AppDrawerSheet(
                         iconSize = if (isLargeScreen) 62.dp else 52.dp,
                         showLabel = true,
                         onClick = { onAppClick(app) },
-                        onSplitLaunch = { onSplitLaunch(app) },
-                        onCreatePair = onCreatePairClick
+                        onSplitLaunch = { onSplitLaunch(app) }
                     )
                 }
             }

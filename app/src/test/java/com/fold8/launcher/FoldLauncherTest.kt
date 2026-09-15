@@ -1,13 +1,9 @@
 package com.fold8.launcher
 
 import android.graphics.Rect
-import com.fold8.launcher.domain.model.AppCategory
-import com.fold8.launcher.domain.model.AppItem
-import com.fold8.launcher.domain.model.AppPairItem
 import com.fold8.launcher.domain.model.DeviceFoldState
 import com.fold8.launcher.domain.model.DisplayMode
 import com.fold8.launcher.domain.model.HingeOrientation
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -54,68 +50,5 @@ class FoldLauncherTest {
         assertTrue(flexState.isFlex)
         assertTrue(flexState.isHalfOpened)
         assertTrue(flexState.isSeparating)
-    }
-
-    @Test
-    fun testAppPairModel() {
-        val app1 = AppItem(
-            packageName = "com.sec.android.app.sbrowser",
-            activityName = "com.sec.android.app.sbrowser.SBrowserMainActivity",
-            label = "삼성 인터넷",
-            category = AppCategory.TOOLS
-        )
-        val app2 = AppItem(
-            packageName = "com.samsung.android.app.notes",
-            activityName = "com.samsung.android.app.notes.memolist.MemoListActivity",
-            label = "삼성 노트",
-            category = AppCategory.PRODUCTIVITY
-        )
-
-        val pair = AppPairItem(
-            id = "pair_1",
-            title = "인터넷 + 메모",
-            primaryApp = app1,
-            secondaryApp = app2,
-            isVerticalSplit = false
-        )
-
-        assertEquals("인터넷 + 메모", pair.title)
-        assertEquals("com.sec.android.app.sbrowser", pair.primaryApp.packageName)
-        assertEquals("com.samsung.android.app.notes", pair.secondaryApp.packageName)
-    }
-
-    @Test
-    fun testAppTrioModel() {
-        val app1 = AppItem(
-            packageName = "com.sec.android.app.sbrowser",
-            activityName = "com.sec.android.app.sbrowser.SBrowserMainActivity",
-            label = "삼성 인터넷",
-            category = AppCategory.TOOLS
-        )
-        val app2 = AppItem(
-            packageName = "com.samsung.android.app.notes",
-            activityName = "com.samsung.android.app.notes.memolist.MemoListActivity",
-            label = "삼성 노트",
-            category = AppCategory.PRODUCTIVITY
-        )
-        val app3 = AppItem(
-            packageName = "com.google.android.youtube",
-            activityName = "com.google.android.youtube.HomeActivity",
-            label = "YouTube",
-            category = AppCategory.MEDIA
-        )
-
-        val trio = com.fold8.launcher.domain.model.AppTrioItem(
-            id = "trio_1",
-            title = "인터넷 + 노트 + 유튜브",
-            primaryApp = app1,
-            secondaryApp = app2,
-            tertiaryApp = app3,
-            layoutType = com.fold8.launcher.domain.model.TrioLayoutType.ONE_LARGE_TWO_SMALL
-        )
-
-        assertEquals("인터넷 + 노트 + 유튜브", trio.title)
-        assertEquals("com.google.android.youtube", trio.tertiaryApp.packageName)
-        assertEquals(com.fold8.launcher.domain.model.TrioLayoutType.ONE_LARGE_TWO_SMALL, trio.layoutType)
     }
 }

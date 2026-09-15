@@ -42,7 +42,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fold8.launcher.domain.model.AppItem
-import com.fold8.launcher.domain.model.AppPairItem
 import com.fold8.launcher.domain.model.DeviceFoldState
 import com.fold8.launcher.ui.theme.FoldAccentCyan
 import com.fold8.launcher.ui.theme.FoldDarkCard
@@ -65,7 +64,6 @@ import com.fold8.launcher.ui.widgets.FoldClockWidget
 fun FlexHomeScreen(
     foldState: DeviceFoldState,
     installedApps: List<AppItem>,
-    appPairs: List<AppPairItem>,
     onAppClick: (AppItem) -> Unit,
     onSplitLaunch: (AppItem) -> Unit,
     onOpenDrawer: () -> Unit,
