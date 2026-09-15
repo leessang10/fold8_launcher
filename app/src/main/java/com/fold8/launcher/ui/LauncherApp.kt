@@ -26,13 +26,13 @@ import com.fold8.launcher.ui.flex.FlexHomeScreen
 import com.fold8.launcher.ui.fold.rememberFoldState
 import com.fold8.launcher.ui.main.MainHomeScreen
 import com.fold8.launcher.ui.theme.Fold8LauncherTheme
-import com.fold8.launcher.ui.theme.FoldDarkBackground
 import com.fold8.launcher.ui.widgets.CreateAppPairDialog
+import com.fold8.launcher.ui.widgets.CreateAppTrioDialog
 
 /**
  * 갤럭시 Z 폴드8 런처 메인 컴포저블
  * - 화면 연속성(App Continuity): 커버/메인/플렉스 전환 시 매끄러운 트랜지션
- * - 전체 앱 서랍(App Drawer) 및 앱 페어 생성 오버레이 관리
+ * - 전체 앱 서랍(App Drawer), 2분할 앱 페어 및 3분할 앱 트리오 생성 오버레이 관리
  */
 @Composable
 fun LauncherApp(
@@ -43,11 +43,14 @@ fun LauncherApp(
     val installedApps by viewModel.installedApps.collectAsState()
     val recentApps by viewModel.recentApps.collectAsState()
     val appPairs by viewModel.appPairs.collectAsState()
+    val appTrios by viewModel.appTrios.collectAsState()
+    val contextualApps by viewModel.contextualApps.collectAsState()
     val filteredApps by viewModel.filteredApps.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val selectedCategory by viewModel.selectedCategory.collectAsState()
     val isAppDrawerOpen by viewModel.isAppDrawerOpen.collectAsState()
     val isCreatePairDialogOpen by viewModel.isCreatePairDialogOpen.collectAsState()
+    val isCreateTrioDialogOpen by viewModel.isCreateTrioDialogOpen.collectAsState()
 
     // 뒤로가기 제스처 처리 (앱 서랍 열려있을 경우 서랍 닫기)
     BackHandler(enabled = isAppDrawerOpen) {
@@ -93,10 +96,15 @@ fun LauncherApp(
                             installedApps = installedApps,
                             recentApps = recentApps,
                             appPairs = appPairs,
+                            appTrios = appTrios,
+                            contextualTitle = viewModel.contextualTitle,
+                            contextualApps = contextualApps,
                             onAppClick = { viewModel.launchApp(it) },
                             onSplitLaunch = { viewModel.launchAppAdjacent(it) },
                             onAppPairClick = { viewModel.launchAppPair(it) },
+                            onAppTrioClick = { viewModel.launchAppTrio(it) },
                             onCreatePairClick = { viewModel.setCreatePairDialogOpen(true) },
+                            onCreateTrioClick = { viewModel.setCreateTrioDialogOpen(true) },
                             onOpenDrawer = { viewModel.setAppDrawerOpen(true) }
                         )
                     }
@@ -149,13 +157,24 @@ fun LauncherApp(
                 )
             }
 
-            // 멀티윈도우 앱 페어 신규 생성 다이얼로그
+            // 2분할 앱 페어 신규 생성 다이얼로그
             if (isCreatePairDialogOpen) {
                 CreateAppPairDialog(
                     availableApps = installedApps,
                     onDismiss = { viewModel.setCreatePairDialogOpen(false) },
                     onSave = { title, first, second ->
                         viewModel.createAndSavePair(title, first, second)
+                    }
+                )
+            }
+
+            // 3분할 앱 트리오 신규 생성 다이얼로그
+            if (isCreateTrioDialogOpen) {
+                CreateAppTrioDialog(
+                    availableApps = installedApps,
+                    onDismiss = { viewModel.setCreateTrioDialogOpen(false) },
+                    onSave = { title, first, second, third ->
+                        viewModel.createAndSaveTrio(title, first, second, third)
                     }
                 )
             }

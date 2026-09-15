@@ -507,3 +507,253 @@ fun CreateAppPairDialog(
         containerColor = Color(0xFF1B202E)
     )
 }
+
+/**
+ * 대화면 폴드8 특화 3분할 앱 트리오(App Trio) 아이콘 뷰
+ */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun AppTrioIconView(
+    trio: com.fold8.launcher.domain.model.AppTrioItem,
+    modifier: Modifier = Modifier,
+    iconSize: Dp = 56.dp,
+    showLabel: Boolean = true,
+    onClick: () -> Unit,
+    onDelete: (() -> Unit)? = null
+) {
+    var showMenu by remember { mutableStateOf(false) }
+    val firstBmp = remember(trio.primaryApp.id) { drawableToBitmap(trio.primaryApp.icon) }
+    val secondBmp = remember(trio.secondaryApp.id) { drawableToBitmap(trio.secondaryApp.icon) }
+    val thirdBmp = remember(trio.tertiaryApp.id) { drawableToBitmap(trio.tertiaryApp.icon) }
+
+    Column(
+        modifier = modifier
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = { if (onDelete != null) showMenu = true }
+            )
+            .padding(vertical = 4.dp, horizontal = 2.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .size(iconSize)
+                .clip(RoundedCornerShape(18.dp))
+                .background(
+                    Brush.linearGradient(
+                        colors = listOf(
+                            FoldPrimary.copy(alpha = 0.5f),
+                            Color(0xFF8B5CF6).copy(alpha = 0.4f),
+                            FoldAccentCyan.copy(alpha = 0.3f)
+                        )
+                    )
+                )
+                .border(1.dp, GlassBorder, RoundedCornerShape(18.dp)),
+            contentAlignment = Alignment.Center
+        ) {
+            // 주 앱 (좌측 절반 영역)
+            if (firstBmp != null) {
+                androidx.compose.foundation.Image(
+                    bitmap = firstBmp.asImageBitmap(),
+                    contentDescription = trio.primaryApp.label,
+                    modifier = Modifier
+                        .size(iconSize * 0.52f)
+                        .offset(x = -(iconSize * 0.20f))
+                        .clip(RoundedCornerShape(8.dp))
+                )
+            }
+            // 보조 1 앱 (우상단)
+            if (secondBmp != null) {
+                androidx.compose.foundation.Image(
+                    bitmap = secondBmp.asImageBitmap(),
+                    contentDescription = trio.secondaryApp.label,
+                    modifier = Modifier
+                        .size(iconSize * 0.42f)
+                        .offset(x = (iconSize * 0.22f), y = -(iconSize * 0.20f))
+                        .clip(RoundedCornerShape(6.dp))
+                )
+            }
+            // 보조 2 앱 (우하단)
+            if (thirdBmp != null) {
+                androidx.compose.foundation.Image(
+                    bitmap = thirdBmp.asImageBitmap(),
+                    contentDescription = trio.tertiaryApp.label,
+                    modifier = Modifier
+                        .size(iconSize * 0.42f)
+                        .offset(x = (iconSize * 0.22f), y = (iconSize * 0.20f))
+                        .clip(RoundedCornerShape(6.dp))
+                )
+            }
+            // 3-Split 뱃지
+            Box(
+                modifier = Modifier
+                    .size(15.dp)
+                    .background(Color(0xFF8B5CF6), CircleShape)
+                    .align(Alignment.BottomStart),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "3",
+                    color = Color.White,
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+
+        if (showLabel) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = trio.title,
+                color = TextPrimary,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(0.9f)
+            )
+        }
+
+        DropdownMenu(
+            expanded = showMenu,
+            onDismissRequest = { showMenu = false },
+            modifier = Modifier.background(Color(0xFF1E2433))
+        ) {
+            DropdownMenuItem(
+                text = { Text("3분할 멀티윈도우 동시 실행", color = FoldAccentCyan) },
+                onClick = {
+                    showMenu = false
+                    onClick()
+                }
+            )
+            if (onDelete != null) {
+                DropdownMenuItem(
+                    leadingIcon = {
+                        Icon(Icons.Default.Close, contentDescription = null, tint = Color.Red)
+                    },
+                    text = { Text("트리오 삭제", color = Color.Red) },
+                    onClick = {
+                        showMenu = false
+                        onDelete()
+                    }
+                )
+            }
+        }
+    }
+}
+
+/**
+ * 3분할 앱 트리오 신규 생성 다이얼로그
+ */
+@Composable
+fun CreateAppTrioDialog(
+    availableApps: List<AppItem>,
+    onDismiss: () -> Unit,
+    onSave: (title: String, first: AppItem, second: AppItem, third: AppItem) -> Unit
+) {
+    var title by remember { mutableStateOf("") }
+    var selectedFirst by remember { mutableStateOf<AppItem?>(null) }
+    var selectedSecond by remember { mutableStateOf<AppItem?>(null) }
+    var selectedThird by remember { mutableStateOf<AppItem?>(null) }
+    var step by remember { mutableStateOf(1) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = when (step) {
+                    1 -> "1. 메인 앱 선택 (50% 영역)"
+                    2 -> "2. 두 번째 분할 앱 선택"
+                    3 -> "3. 세 번째 분할 앱 선택"
+                    else -> "3분할 앱 트리오 이름 지정"
+                },
+                color = TextPrimary,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(modifier = Modifier.height(360.dp)) {
+                if (step in 1..3) {
+                    LazyColumn {
+                        items(availableApps) { app ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        when (step) {
+                                            1 -> {
+                                                selectedFirst = app
+                                                step = 2
+                                            }
+                                            2 -> {
+                                                selectedSecond = app
+                                                step = 3
+                                            }
+                                            3 -> {
+                                                selectedThird = app
+                                                title = "${selectedFirst?.label} + ${selectedSecond?.label} + ${app.label}"
+                                                step = 4
+                                            }
+                                        }
+                                    }
+                                    .padding(vertical = 8.dp, horizontal = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                val bmp = remember(app.id) { drawableToBitmap(app.icon) }
+                                if (bmp != null) {
+                                    androidx.compose.foundation.Image(
+                                        bitmap = bmp.asImageBitmap(),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(36.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(app.label, color = TextPrimary, fontSize = 14.sp)
+                            }
+                        }
+                    }
+                } else {
+                    Column(modifier = Modifier.padding(top = 16.dp)) {
+                        Text(
+                            text = "선택한 3개 앱이 폴드8 대화면에서 3분할(좌측 1개 + 우측 상하 2개)로 동시 실행됩니다.",
+                            color = TextSecondary,
+                            fontSize = 13.sp
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        OutlinedTextField(
+                            value = title,
+                            onValueChange = { title = it },
+                            label = { Text("앱 트리오 이름") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            if (step == 4) {
+                Button(
+                    onClick = {
+                        val first = selectedFirst
+                        val second = selectedSecond
+                        val third = selectedThird
+                        if (first != null && second != null && third != null) {
+                            onSave(title, first, second, third)
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = FoldPrimary)
+                ) {
+                    Text("3분할 트리오 생성")
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("취소", color = TextSecondary)
+            }
+        },
+        containerColor = Color(0xFF1B202E)
+    )
+}

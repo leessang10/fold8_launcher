@@ -2,6 +2,7 @@ package com.fold8.launcher.ui.main
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,17 +18,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.VerticalSplit
+import androidx.compose.material.icons.filled.ViewCarousel
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -35,6 +38,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -45,9 +52,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fold8.launcher.domain.model.AppItem
 import com.fold8.launcher.domain.model.AppPairItem
+import com.fold8.launcher.domain.model.AppTrioItem
+import com.fold8.launcher.ui.piemenu.ThumbPieMenu
 import com.fold8.launcher.ui.taskbar.FoldTaskbarView
 import com.fold8.launcher.ui.theme.FoldAccentCyan
-import com.fold8.launcher.ui.theme.FoldDarkBackground
 import com.fold8.launcher.ui.theme.FoldDarkCard
 import com.fold8.launcher.ui.theme.FoldDarkSurface
 import com.fold8.launcher.ui.theme.FoldPrimary
@@ -57,29 +65,37 @@ import com.fold8.launcher.ui.theme.TextPrimary
 import com.fold8.launcher.ui.theme.TextSecondary
 import com.fold8.launcher.ui.widgets.AppIconView
 import com.fold8.launcher.ui.widgets.AppPairIconView
+import com.fold8.launcher.ui.widgets.AppTrioIconView
 import com.fold8.launcher.ui.widgets.FoldClockWidget
 
 /**
  * 갤럭시 Z 폴드8 내측 대화면 홈 스크린 (Main Inner Screen)
  * - 북-폴드(Book-Fold) 좌/우 2분할 듀얼 페이지 레이아웃
- * - 좌측: 대형 시계 위젯, 생산성 대시보드, 멀티윈도우 앱 페어 그리드
+ * - 좌측: 대형 시계 위젯, 멀티윈도우 허브 (2분할 앱 페어 / 3분할 앱 트리오 토글), 시간대별 AI 추천 카드
  * - 우측: 5열 고해상도 앱 런치패드 및 빠른 검색
  * - 하단: 폴더블 전용 고정 생산성 태스크바 (Taskbar)
+ * - 좌/우측 코너: 양손 엄지 손가락 최적화 파이 메뉴 (Thumb Pie Menu)
  */
 @Composable
 fun MainHomeScreen(
     installedApps: List<AppItem>,
     recentApps: List<AppItem>,
     appPairs: List<AppPairItem>,
+    appTrios: List<AppTrioItem>,
+    contextualTitle: String,
+    contextualApps: List<AppItem>,
     onAppClick: (AppItem) -> Unit,
     onSplitLaunch: (AppItem) -> Unit,
     onAppPairClick: (AppPairItem) -> Unit,
+    onAppTrioClick: (AppTrioItem) -> Unit,
     onCreatePairClick: () -> Unit,
+    onCreateTrioClick: () -> Unit,
     onOpenDrawer: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val pinnedDockApps = installedApps.take(6)
     val rightPaneApps = installedApps.take(20)
+    var isTrioTabSelected by remember { mutableStateOf(false) }
 
     Box(
         modifier = modifier
@@ -101,7 +117,7 @@ fun MainHomeScreen(
                     .fillMaxHeight()
                     .padding(end = 16.dp)
             ) {
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
                 // 대형 디지털 시계 & 폴드 상태 뱃지
                 FoldClockWidget(
@@ -109,9 +125,9 @@ fun MainHomeScreen(
                     statusText = "Galaxy Z Fold8"
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(14.dp))
 
-                // 멀티윈도우 앱 페어 대시보드 카드
+                // 멀티윈도우 허브 (2분할 앱 페어 / 3분할 앱 트리오 스위처)
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -119,117 +135,163 @@ fun MainHomeScreen(
                         .border(1.dp, GlassBorder, RoundedCornerShape(24.dp)),
                     color = FoldDarkSurface
                 ) {
-                    Column(modifier = Modifier.padding(18.dp)) {
+                    Column(modifier = Modifier.padding(16.dp)) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween,
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    Icons.Default.VerticalSplit,
-                                    contentDescription = null,
-                                    tint = FoldAccentCyan,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "분할 앱 페어 (Split Pairs)",
-                                    color = TextPrimary,
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
+                            // 2분할 / 3분할 모드 탭
+                            Row(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(FoldDarkCard)
+                                    .padding(3.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(if (!isTrioTabSelected) FoldPrimary else Color.Transparent)
+                                        .clickable { isTrioTabSelected = false }
+                                        .padding(horizontal = 10.dp, vertical = 5.dp)
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Default.VerticalSplit, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("앱 페어(2분할)", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(if (isTrioTabSelected) Color(0xFF8B5CF6) else Color.Transparent)
+                                        .clickable { isTrioTabSelected = true }
+                                        .padding(horizontal = 10.dp, vertical = 5.dp)
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Default.ViewCarousel, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("앱 트리오(3분할)", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                    }
+                                }
                             }
 
-                            // 페어 생성 버튼
+                            // 신규 추가 버튼
                             IconButton(
-                                onClick = onCreatePairClick,
+                                onClick = if (isTrioTabSelected) onCreateTrioClick else onCreatePairClick,
                                 modifier = Modifier
                                     .size(32.dp)
                                     .clip(CircleShape)
-                                    .background(FoldPrimary.copy(alpha = 0.3f))
+                                    .background(if (isTrioTabSelected) Color(0xFF8B5CF6).copy(alpha = 0.4f) else FoldPrimary.copy(alpha = 0.4f))
                             ) {
                                 Icon(
                                     Icons.Default.Add,
-                                    contentDescription = "페어 추가",
+                                    contentDescription = "추가",
                                     tint = Color.White,
                                     modifier = Modifier.size(16.dp)
                                 )
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(10.dp))
 
-                        if (appPairs.isEmpty()) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 16.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Button(
-                                    onClick = onCreatePairClick,
-                                    colors = ButtonDefaults.buttonColors(containerColor = FoldPrimary.copy(alpha = 0.6f)),
-                                    shape = RoundedCornerShape(16.dp)
+                        if (!isTrioTabSelected) {
+                            // 2분할 앱 페어 목록
+                            if (appPairs.isEmpty()) {
+                                Box(
+                                    modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                                    contentAlignment = Alignment.Center
                                 ) {
-                                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text("자주 쓰는 두 앱을 묶어보세요", fontSize = 12.sp)
+                                    Text("등록된 2분할 앱 페어가 없습니다.", color = TextSecondary, fontSize = 12.sp)
+                                }
+                            } else {
+                                LazyVerticalGrid(
+                                    columns = GridCells.Fixed(3),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                    modifier = Modifier.height(120.dp)
+                                ) {
+                                    items(appPairs) { pair ->
+                                        AppPairIconView(
+                                            pair = pair,
+                                            iconSize = 50.dp,
+                                            showLabel = true,
+                                            onClick = { onAppPairClick(pair) }
+                                        )
+                                    }
                                 }
                             }
                         } else {
-                            LazyVerticalGrid(
-                                columns = GridCells.Fixed(3),
-                                verticalArrangement = Arrangement.spacedBy(8.dp),
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                modifier = Modifier.height(130.dp)
-                            ) {
-                                items(appPairs) { pair ->
-                                    AppPairIconView(
-                                        pair = pair,
-                                        iconSize = 52.dp,
-                                        showLabel = true,
-                                        onClick = { onAppPairClick(pair) }
-                                    )
+                            // 3분할 앱 트리오 목록
+                            if (appTrios.isEmpty()) {
+                                Box(
+                                    modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text("등록된 3분할 앱 트리오가 없습니다.", color = TextSecondary, fontSize = 12.sp)
+                                }
+                            } else {
+                                LazyVerticalGrid(
+                                    columns = GridCells.Fixed(3),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                    modifier = Modifier.height(120.dp)
+                                ) {
+                                    items(appTrios) { trio ->
+                                        AppTrioIconView(
+                                            trio = trio,
+                                            iconSize = 50.dp,
+                                            showLabel = true,
+                                            onClick = { onAppTrioClick(trio) }
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-                // 빠른 S펜 / 스마트 액션 카드
+                // 시간대별 지능형 AI 추천 카드
                 Surface(
-                    onClick = onOpenDrawer,
                     shape = RoundedCornerShape(20.dp),
                     color = FoldDarkCard,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(52.dp)
                         .border(1.dp, GlassBorder, RoundedCornerShape(20.dp))
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(horizontal = 16.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.Search,
-                            contentDescription = "검색",
-                            tint = FoldAccentCyan,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            "앱 검색, 웹 탐색, 멀티태스킹 바로가기...",
-                            color = TextSecondary,
-                            fontSize = 13.sp
-                        )
+                    Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = FoldAccentCyan, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = contextualTitle,
+                                color = TextPrimary,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            items(contextualApps) { app ->
+                                AppIconView(
+                                    app = app,
+                                    iconSize = 42.dp,
+                                    showLabel = false,
+                                    onClick = { onAppClick(app) },
+                                    onSplitLaunch = { onSplitLaunch(app) }
+                                )
+                            }
+                        }
                     }
                 }
             }
 
-            // 중앙 힌지(Hinge) 심미적 가이드 라인 (은은한 폴더블 세로 그라데이션)
+            // 중앙 힌지(Hinge) 심미적 가이드 라인
             Box(
                 modifier = Modifier
                     .width(1.dp)
@@ -253,7 +315,7 @@ fun MainHomeScreen(
                     .fillMaxHeight()
                     .padding(start = 16.dp)
             ) {
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -285,7 +347,7 @@ fun MainHomeScreen(
                     items(rightPaneApps, key = { it.id }) { app ->
                         AppIconView(
                             app = app,
-                            iconSize = 58.dp,
+                            iconSize = 56.dp,
                             showLabel = true,
                             onClick = { onAppClick(app) },
                             onSplitLaunch = { onSplitLaunch(app) },
@@ -307,7 +369,31 @@ fun MainHomeScreen(
             onOpenDrawer = onOpenDrawer,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 12.dp)
+                .padding(bottom = 10.dp)
+        )
+
+        // [인간공학 UI] 좌측 하단 코너 엄지 파이 메뉴 (Thumb Pie Menu - 시스템 액션)
+        ThumbPieMenu(
+            isLeftCorner = true,
+            apps = installedApps,
+            onAppClick = onAppClick,
+            onOpenDrawer = onOpenDrawer,
+            onOpenTrioDialog = onCreateTrioClick,
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(bottom = 6.dp, start = 6.dp)
+        )
+
+        // [인간공학 UI] 우측 하단 코너 엄지 파이 메뉴 (Thumb Pie Menu - 퀵 앱)
+        ThumbPieMenu(
+            isLeftCorner = false,
+            apps = installedApps,
+            onAppClick = onAppClick,
+            onOpenDrawer = onOpenDrawer,
+            onOpenTrioDialog = onCreateTrioClick,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(bottom = 6.dp, end = 6.dp)
         )
     }
 }
