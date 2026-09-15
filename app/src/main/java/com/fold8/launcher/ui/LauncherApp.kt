@@ -11,20 +11,28 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fold8.launcher.domain.model.DisplayMode
 import com.fold8.launcher.ui.appdrawer.AppDrawerSheet
 import com.fold8.launcher.ui.cover.CoverHomeScreen
+import com.fold8.launcher.ui.dock.RightVerticalDock
 import com.fold8.launcher.ui.flex.FlexHomeScreen
 import com.fold8.launcher.ui.fold.rememberFoldState
 import com.fold8.launcher.ui.main.MainHomeScreen
@@ -47,6 +55,7 @@ fun LauncherApp(
     val foldState = rememberFoldState()
 
     val installedApps by viewModel.installedApps.collectAsState()
+    val dockApps by viewModel.dockApps.collectAsState()
     val filteredApps by viewModel.filteredApps.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val selectedCategory by viewModel.selectedCategory.collectAsState()
@@ -79,43 +88,68 @@ fun LauncherApp(
                     )
                 )
         ) {
-            // 폴드8 디스플레이 모드에 따른 화면 전환
-            AnimatedContent(
-                targetState = foldState.displayMode,
-                transitionSpec = {
-                    fadeIn(animationSpec = tween(300)) togetherWith fadeOut(animationSpec = tween(300))
-                },
-                label = "FoldScreenTransition"
-            ) { mode ->
-                when (mode) {
-                    DisplayMode.COVER -> {
-                        CoverHomeScreen(
-                            installedApps = installedApps,
-                            onAppClick = { viewModel.launchApp(it) },
-                            onSplitLaunch = { viewModel.launchAppAdjacent(it) },
-                            onOpenDrawer = { viewModel.setAppDrawerOpen(true) },
-                            onOpenTentMode = { isTentModeActive = true }
-                        )
-                    }
-                    DisplayMode.MAIN_FLAT -> {
-                        MainHomeScreen(
-                            installedApps = installedApps,
-                            onAppClick = { viewModel.launchApp(it) },
-                            onSplitLaunch = { viewModel.launchAppAdjacent(it) },
-                            onOpenDrawer = { viewModel.setAppDrawerOpen(true) },
-                            onOpenTentMode = { isTentModeActive = true }
-                        )
-                    }
-                    DisplayMode.MAIN_FLEX -> {
-                        FlexHomeScreen(
-                            foldState = foldState,
-                            installedApps = installedApps,
-                            onAppClick = { viewModel.launchApp(it) },
-                            onSplitLaunch = { viewModel.launchAppAdjacent(it) },
-                            onOpenDrawer = { viewModel.setAppDrawerOpen(true) }
-                        )
+            // [가로세로 / 펼침접힘 상관없이 우측 세로 슬림 독 항상 유지]
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .statusBarsPadding()
+                    .navigationBarsPadding()
+            ) {
+                // 좌측: 폴드8 디스플레이 모드(Cover/Main/Flex)에 따른 홈 화면 영역
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                ) {
+                    AnimatedContent(
+                        targetState = foldState.displayMode,
+                        transitionSpec = {
+                            fadeIn(animationSpec = tween(300)) togetherWith fadeOut(animationSpec = tween(300))
+                        },
+                        label = "FoldScreenTransition"
+                    ) { mode ->
+                        when (mode) {
+                            DisplayMode.COVER -> {
+                                CoverHomeScreen(
+                                    installedApps = installedApps,
+                                    onAppClick = { viewModel.launchApp(it) },
+                                    onSplitLaunch = { viewModel.launchAppAdjacent(it) },
+                                    onOpenDrawer = { viewModel.setAppDrawerOpen(true) },
+                                    onOpenTentMode = { isTentModeActive = true }
+                                )
+                            }
+                            DisplayMode.MAIN_FLAT -> {
+                                MainHomeScreen(
+                                    installedApps = installedApps,
+                                    onAppClick = { viewModel.launchApp(it) },
+                                    onSplitLaunch = { viewModel.launchAppAdjacent(it) },
+                                    onOpenDrawer = { viewModel.setAppDrawerOpen(true) },
+                                    onOpenTentMode = { isTentModeActive = true }
+                                )
+                            }
+                            DisplayMode.MAIN_FLEX -> {
+                                FlexHomeScreen(
+                                    foldState = foldState,
+                                    installedApps = installedApps,
+                                    onAppClick = { viewModel.launchApp(it) },
+                                    onSplitLaunch = { viewModel.launchAppAdjacent(it) },
+                                    onOpenDrawer = { viewModel.setAppDrawerOpen(true) }
+                                )
+                            }
+                        }
                     }
                 }
+
+                // 우측 세로 슬림 독: 폼팩터/방향 무관 우측 고정 배치
+                RightVerticalDock(
+                    dockApps = dockApps,
+                    onAppClick = { viewModel.launchApp(it) },
+                    onSplitLaunch = { viewModel.launchAppAdjacent(it) },
+                    onOpenDrawer = { viewModel.setAppDrawerOpen(true) },
+                    modifier = Modifier
+                        .align(Alignment.CenterVertically)
+                        .padding(end = 8.dp)
+                )
             }
 
             // 5번 기능: 텐트 모드 / 탁상시계 전체화면 오버레이

@@ -25,7 +25,6 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.NightlightRound
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
@@ -43,7 +42,6 @@ import androidx.compose.ui.unit.sp
 import com.fold8.launcher.domain.model.AppItem
 import com.fold8.launcher.ui.theme.FoldAccentCyan
 import com.fold8.launcher.ui.theme.FoldDarkCard
-import com.fold8.launcher.ui.theme.FoldPrimary
 import com.fold8.launcher.ui.theme.GlassBorder
 import com.fold8.launcher.ui.theme.TextPrimary
 import com.fold8.launcher.ui.theme.TextSecondary
@@ -68,15 +66,11 @@ fun CoverHomeScreen(
     // 북 미러링 데이터: Page 1(좌측)과 Page 2(우측)
     val page1Apps = installedApps.take(16)
     val page2Apps = installedApps.drop(16).take(16)
-    val dockApps = installedApps.take(4)
 
     val pagerState = rememberPagerState(pageCount = { 2 })
 
     Box(
-        modifier = modifier
-            .fillMaxSize()
-            .statusBarsPadding()
-            .navigationBarsPadding()
+        modifier = modifier.fillMaxSize()
     ) {
         Column(
             modifier = Modifier
@@ -166,7 +160,7 @@ fun CoverHomeScreen(
                 val currentApps = if (page == 0) page1Apps else page2Apps
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(4),
-                    contentPadding = PaddingValues(bottom = 80.dp),
+                    contentPadding = PaddingValues(bottom = 36.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp),
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                     modifier = Modifier.fillMaxSize()
@@ -188,7 +182,7 @@ fun CoverHomeScreen(
         Row(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 86.dp),
+                .padding(bottom = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             repeat(2) { pageIndex ->
@@ -199,52 +193,6 @@ fun CoverHomeScreen(
                         .clip(CircleShape)
                         .background(if (isSelected) FoldAccentCyan else Color(0x66FFFFFF))
                 )
-            }
-        }
-
-        // 4. 하단 퀵 독 (Bottom Quick Dock)
-        Surface(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 8.dp)
-                .height(68.dp)
-                .clip(RoundedCornerShape(32.dp))
-                .border(1.dp, GlassBorder, RoundedCornerShape(32.dp)),
-            color = FoldDarkCard
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceAround
-            ) {
-                dockApps.forEach { app ->
-                    AppIconView(
-                        app = app,
-                        iconSize = 46.dp,
-                        showLabel = false,
-                        onClick = { onAppClick(app) },
-                        onSplitLaunch = { onSplitLaunch(app) }
-                    )
-                }
-
-                // 앱 서랍 진입 버튼
-                IconButton(
-                    onClick = onOpenDrawer,
-                    modifier = Modifier
-                        .size(44.dp)
-                        .clip(CircleShape)
-                        .background(FoldPrimary.copy(alpha = 0.25f))
-                ) {
-                    Icon(
-                        Icons.Default.Apps,
-                        contentDescription = "전체 앱",
-                        tint = Color.White,
-                        modifier = Modifier.size(22.dp)
-                    )
-                }
             }
         }
     }

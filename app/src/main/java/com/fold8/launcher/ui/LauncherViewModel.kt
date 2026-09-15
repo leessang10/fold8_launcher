@@ -24,6 +24,27 @@ class LauncherViewModel(application: Application) : AndroidViewModel(application
 
     val installedApps: StateFlow<List<AppItem>> = appRepository.installedApps
 
+    val dockApps: StateFlow<List<AppItem>> = installedApps.map { apps ->
+        val preferred = mutableListOf<AppItem>()
+        fun addIfMatch(predicate: (AppItem) -> Boolean) {
+            if (preferred.size < 5) {
+                apps.firstOrNull(predicate)?.let { if (!preferred.contains(it)) preferred.add(it) }
+            }
+        }
+        // 전화, 메시지, 브라우저, 카메라, 갤러리/설정 우선순위 선별
+        addIfMatch { it.packageName.contains("dialer") || it.packageName.contains("phone") || it.label.contains("전화") }
+        addIfMatch { it.packageName.contains("message") || it.label.contains("메시지") }
+        addIfMatch { it.packageName.contains("chrome") || it.packageName.contains("browser") || it.label.contains("인터넷") || it.label.contains("크롬") }
+        addIfMatch { it.packageName.contains("camera") || it.label.contains("카메라") }
+        addIfMatch { it.packageName.contains("gallery") || it.label.contains("갤러리") || it.packageName.contains("setting") || it.label.contains("설정") }
+
+        for (app in apps) {
+            if (preferred.size >= 5) break
+            if (!preferred.contains(app)) preferred.add(app)
+        }
+        preferred
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     private val _recentApps = MutableStateFlow<List<AppItem>>(emptyList())
     val recentApps: StateFlow<List<AppItem>> = _recentApps.asStateFlow()
 

@@ -39,7 +39,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fold8.launcher.domain.model.AppItem
-import com.fold8.launcher.ui.dock.RightVerticalDock
 import com.fold8.launcher.ui.theme.FoldAccentCyan
 import com.fold8.launcher.ui.theme.FoldDarkCard
 import com.fold8.launcher.ui.theme.FoldDarkSurface
@@ -69,18 +68,14 @@ fun MainHomeScreen(
     // 북 미러링: Page 1(좌측 16개)과 Page 2(우측 16개) 분할
     val page1Apps = installedApps.take(16)
     val page2Apps = installedApps.drop(16).take(16)
-    val dockApps = installedApps.take(5)
 
     Box(
-        modifier = modifier
-            .fillMaxSize()
-            .statusBarsPadding()
-            .navigationBarsPadding()
+        modifier = modifier.fillMaxSize()
     ) {
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(start = 24.dp, top = 8.dp, bottom = 16.dp, end = 12.dp),
+                .padding(start = 16.dp, top = 8.dp, bottom = 16.dp, end = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // ==========================================
@@ -260,18 +255,6 @@ fun MainHomeScreen(
                     }
                 }
             }
-
-            // ==========================================
-            // [우측 세로 독 (Right Vertical Dock)]
-            // 서피스 듀오 스타일: 우측 끝단 오른손 엄지 반경 배치
-            // ==========================================
-            RightVerticalDock(
-                dockApps = dockApps,
-                onAppClick = onAppClick,
-                onSplitLaunch = onSplitLaunch,
-                onOpenDrawer = onOpenDrawer,
-                modifier = Modifier.align(Alignment.CenterVertically)
-            )
         }
     }
 }

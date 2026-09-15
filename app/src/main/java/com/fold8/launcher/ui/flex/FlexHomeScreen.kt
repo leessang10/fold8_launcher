@@ -72,10 +72,7 @@ fun FlexHomeScreen(
     val quickApps = installedApps.take(12)
 
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .statusBarsPadding()
-            .navigationBarsPadding()
+        modifier = modifier.fillMaxSize()
     ) {
         // [상단 영역: 스탠드 뷰] 거치된 시선에 최적화
         Column(

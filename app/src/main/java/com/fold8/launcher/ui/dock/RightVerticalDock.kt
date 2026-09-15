@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -31,9 +32,9 @@ import com.fold8.launcher.ui.theme.GlassBorder
 import com.fold8.launcher.ui.widgets.AppIconView
 
 /**
- * 갤럭시 Z 폴드8 대화면 특화 우측 세로 독 (Right Vertical Dock)
- * - 서피스 듀오 / 폴더블 태블릿 스타일로 화면 우측 끝단에 세로로 배치
- * - 오른손으로 기기를 쥔 상태에서 엄지손가락 하나로 모든 주요 앱과 앱 서랍을 실행
+ * 갤럭시 Z 폴드8 특화 우측 세로 슬림 독 (Right Vertical Slim Dock)
+ * - 가로/세로, 펼침/접힘 상관없이 항상 화면 우측에 고정되는 슬림형 캡슐 독
+ * - 54dp 슬림 폭으로 커버 화면/메인 화면 가리지 않고 오른손 엄지 조작 영역에 위치
  */
 @Composable
 fun RightVerticalDock(
@@ -45,61 +46,53 @@ fun RightVerticalDock(
 ) {
     Surface(
         modifier = modifier
-            .width(68.dp)
-            .fillMaxHeight(0.82f)
-            .clip(RoundedCornerShape(34.dp))
-            .border(1.dp, GlassBorder, RoundedCornerShape(34.dp)),
-        color = FoldDarkCard
+            .width(54.dp)
+            .wrapContentHeight()
+            .clip(RoundedCornerShape(27.dp))
+            .border(1.dp, GlassBorder, RoundedCornerShape(27.dp)),
+        color = FoldDarkCard.copy(alpha = 0.90f)
     ) {
         Column(
             modifier = Modifier
-                .padding(vertical = 14.dp, horizontal = 4.dp),
+                .padding(vertical = 10.dp, horizontal = 4.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // 상단~중단: 고정 즐겨찾기 앱 세로 정렬 (최대 5개)
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                dockApps.take(5).forEach { app ->
-                    AppIconView(
-                        app = app,
-                        iconSize = 46.dp,
-                        showLabel = false,
-                        onClick = { onAppClick(app) },
-                        onSplitLaunch = { onSplitLaunch(app) },
-                        modifier = Modifier.padding(vertical = 2.dp)
-                    )
-                }
+            // 상단: 즐겨찾기 주요 앱 세로 정렬 (최대 5개)
+            dockApps.take(5).forEach { app ->
+                AppIconView(
+                    app = app,
+                    iconSize = 38.dp,
+                    showLabel = false,
+                    onClick = { onAppClick(app) },
+                    onSplitLaunch = { onSplitLaunch(app) },
+                    modifier = Modifier.padding(vertical = 1.dp)
+                )
             }
 
-            // 구분선 및 최하단 전체 앱 서랍(App Drawer) 토글 버튼
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Box(
-                    modifier = Modifier
-                        .width(28.dp)
-                        .height(1.dp)
-                        .background(GlassBorder)
+            // 슬림 구분선
+            Box(
+                modifier = Modifier
+                    .width(22.dp)
+                    .height(1.dp)
+                    .background(GlassBorder)
+            )
+
+            // 최하단 전체 앱 서랍(App Drawer) 진입 버튼
+            IconButton(
+                onClick = onOpenDrawer,
+                modifier = Modifier
+                    .size(38.dp)
+                    .clip(CircleShape)
+                    .background(FoldPrimary.copy(alpha = 0.35f))
+                    .border(1.dp, GlassBorder, CircleShape)
+            ) {
+                Icon(
+                    Icons.Default.Apps,
+                    contentDescription = "전체 앱 서랍",
+                    tint = Color.White,
+                    modifier = Modifier.size(20.dp)
                 )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                IconButton(
-                    onClick = onOpenDrawer,
-                    modifier = Modifier
-                        .size(46.dp)
-                        .clip(CircleShape)
-                        .background(FoldPrimary.copy(alpha = 0.35f))
-                        .border(1.dp, GlassBorder, CircleShape)
-                ) {
-                    Icon(
-                        Icons.Default.Apps,
-                        contentDescription = "전체 앱 서랍",
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
             }
         }
     }
