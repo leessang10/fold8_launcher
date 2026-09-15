@@ -15,6 +15,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -25,6 +28,7 @@ import com.fold8.launcher.ui.cover.CoverHomeScreen
 import com.fold8.launcher.ui.flex.FlexHomeScreen
 import com.fold8.launcher.ui.fold.rememberFoldState
 import com.fold8.launcher.ui.main.MainHomeScreen
+import com.fold8.launcher.ui.tent.TentClockScreen
 import com.fold8.launcher.ui.theme.Fold8LauncherTheme
 import com.fold8.launcher.ui.widgets.CreateAppPairDialog
 import com.fold8.launcher.ui.widgets.CreateAppTrioDialog
@@ -32,7 +36,11 @@ import com.fold8.launcher.ui.widgets.CreateAppTrioDialog
 /**
  * 갤럭시 Z 폴드8 런처 메인 컴포저블
  * - 화면 연속성(App Continuity): 커버/메인/플렉스 전환 시 매끄러운 트랜지션
- * - 전체 앱 서랍(App Drawer), 2분할 앱 페어 및 3분할 앱 트리오 생성 오버레이 관리
+ * - 4대 폴드 특화 기능 코디네이터:
+ *   1. 힌지 주름 회피 스마트 그리드
+ *   4. 커버-메인 북 미러링
+ *   5. 텐트 모드 / 거치형 AOD 탁상시계
+ *   우측 세로 독(Right Vertical Dock)
  */
 @Composable
 fun LauncherApp(
@@ -44,7 +52,6 @@ fun LauncherApp(
     val recentApps by viewModel.recentApps.collectAsState()
     val appPairs by viewModel.appPairs.collectAsState()
     val appTrios by viewModel.appTrios.collectAsState()
-    val contextualApps by viewModel.contextualApps.collectAsState()
     val filteredApps by viewModel.filteredApps.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val selectedCategory by viewModel.selectedCategory.collectAsState()
@@ -52,9 +59,16 @@ fun LauncherApp(
     val isCreatePairDialogOpen by viewModel.isCreatePairDialogOpen.collectAsState()
     val isCreateTrioDialogOpen by viewModel.isCreateTrioDialogOpen.collectAsState()
 
-    // 뒤로가기 제스처 처리 (앱 서랍 열려있을 경우 서랍 닫기)
-    BackHandler(enabled = isAppDrawerOpen) {
-        viewModel.setAppDrawerOpen(false)
+    // 5번 기능: 텐트 모드(탁상시계) 활성화 상태
+    var isTentModeActive by remember { mutableStateOf(false) }
+
+    // 뒤로가기 제스처 처리 (텐트 모드나 앱 서랍 열려있을 경우 닫기)
+    BackHandler(enabled = isTentModeActive || isAppDrawerOpen) {
+        if (isTentModeActive) {
+            isTentModeActive = false
+        } else if (isAppDrawerOpen) {
+            viewModel.setAppDrawerOpen(false)
+        }
     }
 
     Fold8LauncherTheme {
@@ -84,28 +98,19 @@ fun LauncherApp(
                     DisplayMode.COVER -> {
                         CoverHomeScreen(
                             installedApps = installedApps,
-                            appPairs = appPairs,
                             onAppClick = { viewModel.launchApp(it) },
                             onSplitLaunch = { viewModel.launchAppAdjacent(it) },
-                            onAppPairClick = { viewModel.launchAppPair(it) },
-                            onOpenDrawer = { viewModel.setAppDrawerOpen(true) }
+                            onOpenDrawer = { viewModel.setAppDrawerOpen(true) },
+                            onOpenTentMode = { isTentModeActive = true }
                         )
                     }
                     DisplayMode.MAIN_FLAT -> {
                         MainHomeScreen(
                             installedApps = installedApps,
-                            recentApps = recentApps,
-                            appPairs = appPairs,
-                            appTrios = appTrios,
-                            contextualTitle = viewModel.contextualTitle,
-                            contextualApps = contextualApps,
                             onAppClick = { viewModel.launchApp(it) },
                             onSplitLaunch = { viewModel.launchAppAdjacent(it) },
-                            onAppPairClick = { viewModel.launchAppPair(it) },
-                            onAppTrioClick = { viewModel.launchAppTrio(it) },
-                            onCreatePairClick = { viewModel.setCreatePairDialogOpen(true) },
-                            onCreateTrioClick = { viewModel.setCreateTrioDialogOpen(true) },
-                            onOpenDrawer = { viewModel.setAppDrawerOpen(true) }
+                            onOpenDrawer = { viewModel.setAppDrawerOpen(true) },
+                            onOpenTentMode = { isTentModeActive = true }
                         )
                     }
                     DisplayMode.MAIN_FLEX -> {
@@ -119,6 +124,17 @@ fun LauncherApp(
                         )
                     }
                 }
+            }
+
+            // 5번 기능: 텐트 모드 / 탁상시계 전체화면 오버레이
+            AnimatedVisibility(
+                visible = isTentModeActive,
+                enter = fadeIn(animationSpec = tween(300)),
+                exit = fadeOut(animationSpec = tween(250))
+            ) {
+                TentClockScreen(
+                    onExit = { isTentModeActive = false }
+                )
             }
 
             // 슬라이드업 전체 앱 서랍 (App Drawer)
